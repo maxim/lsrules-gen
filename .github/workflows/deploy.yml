@@ -1,0 +1,28 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * *' # daily at midnight
+
+jobs:
+  deploy-msteams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create build dir
+        run: mkdir -p build
+      - name: Generate msteams.lsrules
+        run: "./gen-msteams > build/msteams.lsrules"
+      - name: Check the time
+        id: time
+        run: echo "::set-output name=now::$(date --rfc-3339=seconds)"
+      - name: Publish msteams.lsrules
+        uses: popsiclestick/gist-sync-action@v1.2.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gist_url: https://gist.github.com/maxim/2ae0a2b68bb6ae053ee0a72e57e4e34d
+          gist_title: msteams.lsrules
+          gist_description: Little Snitch rules for Microsoft Teams, updated at ${{ steps.time.outputs.now }}.
+          github_file: ./build/msteams.lsrules

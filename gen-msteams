@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'open-uri'
+require 'securerandom'
+require 'ipaddr'
+
+GUID = 'f11f029f-a2d4-4b75-92cd-2df8a9549b65' # Any GUID is okay.
+PROCESS = '/Applications/Microsoft Teams.app/Contents/MacOS/Teams'
+
+def make_endpoint(guid = SecureRandom.uuid)
+  'https://endpoints.office.com/endpoints/worldwide' \
+  "?clientrequestid=#{guid}&ServiceAreas=Skype"
+end
+
+def ports_to_ranges(ports)
+  ports
+    .split(',')
+    .map(&:to_i)
+    .chunk_while { |a, b| a.succ == b }
+    .map { |h, *t| [h, t.last].compact.join('-') }
+    .join(',')
+end
+
+def ips_to_ranges(ip_strings)
+  ip_strings
+    .map { |ip_string|
+      ip_range = IPAddr.new(ip_string).to_range
+      a = ip_range.begin.to_s
+      b = ip_range.end.to_s
+      a == b ? a : "#{a}-#{b}"
+    }
+    .join(',')
+end
+
+def get_domains(urls)
+  urls
+    .select { |v| v.start_with?('*') }
+    .map { |d| d.start_with?('*.') ? d[2..-1] : d[1..-1] }
+end
+
+def get_hosts(urls, domains = get_domains(urls))
+  urls.reject { |v| v.start_with?('*') } - domains
+end
+
+msrules = JSON.parse(URI.open(make_endpoint(GUID)).read)
+
+def extract_lsrules(msrule)
+  lsrule = {
+    'action'  => msrule['required'] ? 'allow' : 'ask',
+    'notes'   => msrule['notes'],
+    'process' => '/Applications/Microsoft Teams.app/Contents/MacOS/Teams'
+  }.compact
+
+  lsrules = []
+
+  %w[ips hosts domains].product(%w[tcp udp]).each do |dest_type, protocol|
+    case dest_type
+    when 'ips'
+      next unless ['ips', "#{protocol}Ports"].all? { |k| msrule.key?(k) }
+
+      lsrules << lsrule.merge(
+        'remote-addresses' => ips_to_ranges(msrule['ips']),
+        'ports'            => ports_to_ranges(msrule["#{protocol}Ports"]),
+        'protocol'         => protocol
+      )
+    when 'hosts'
+      next unless ['urls', "#{protocol}Ports"].all? { |k| msrule.key?(k) }
+      hosts = get_hosts(msrule['urls'])
+      next if hosts.none?
+
+      lsrules << lsrule.merge(
+        'remote-hosts'   => hosts,
+        'ports'          => ports_to_ranges(msrule["#{protocol}Ports"]),
+        'protocol'       => protocol
+      )
+    when 'domains'
+      next unless ['urls', "#{protocol}Ports"].all? { |k| msrule.key?(k) }
+      domains = get_domains(msrule['urls'])
+      next if domains.none?
+
+      lsrules << lsrule.merge(
+        'remote-domains' => domains,
+        'ports'          => ports_to_ranges(msrule["#{protocol}Ports"]),
+        'protocol'       => protocol
+      )
+    end
+  end
+
+  lsrules
+end
+
+puts JSON.pretty_generate \
+  description: "Rules based on Microsoft Endpoints API at #{make_endpoint}",
+  name:        'Microsoft Teams',
+  rules:       msrules.flat_map { |msrule| extract_lsrules(msrule) }
