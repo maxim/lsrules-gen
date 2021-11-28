@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'open-uri'
+
+PROCESS = '/Applications/Skype.app/Contents/MacOS/Skype'
+SOURCE = 'https://support.skype.com/en/faq/FA148/' \
+         'which-ports-need-to-be-open-to-use-skype-on-desktop'
+
+rules =
+  URI.open(SOURCE).read.scan(/[0-9\-]+\/(?:UDP|TCP)/)
+    .group_by { |l| l[-3..-1] } # group by protocol
+    .map { |protocol, lines|
+      {
+        action: 'allow',
+        process: PROCESS,
+        ports: lines.map { |l| l.split('/').first }.join(','),
+        protocol: protocol
+      }
+    }
+
+puts JSON.pretty_generate \
+  description: "Rules based on Skype FAQ at #{SOURCE}",
+  name:        'Skype',
+  rules:       rules

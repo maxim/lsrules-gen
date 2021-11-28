@@ -49,7 +49,7 @@ def extract_lsrules(msrule)
   lsrule = {
     'action'  => msrule['required'] ? 'allow' : 'ask',
     'notes'   => msrule['notes'],
-    'process' => '/Applications/Microsoft Teams.app/Contents/MacOS/Teams'
+    'process' => PROCESS
   }.compact
 
   lsrules = []

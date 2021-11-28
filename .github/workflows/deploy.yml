@@ -15,6 +15,8 @@ jobs:
         run: mkdir -p build
       - name: Generate msteams.lsrules
         run: "./gen-msteams > build/msteams.lsrules"
+      - name: Generate skype.lsrules
+        run: "./gen-skype > build/skype.lsrules"
       - name: Check the time
         id: time
         run: echo "::set-output name=now::$(date --rfc-3339=seconds)"
@@ -26,3 +28,11 @@ jobs:
           gist_title: msteams.lsrules
           gist_description: Little Snitch rules for Microsoft Teams, updated at ${{ steps.time.outputs.now }}.
           github_file: ./build/msteams.lsrules
+      - name: Publish skype.lsrules
+        uses: popsiclestick/gist-sync-action@v1.2.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gist_url: https://gist.github.com/maxim/48753f090f99f21e6091a62e0b56311e
+          gist_title: skype.lsrules
+          gist_description: Little Snitch rules for Skype, updated at ${{ steps.time.outputs.now }}.
+          github_file: ./build/skype.lsrules
