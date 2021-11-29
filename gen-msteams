@@ -5,10 +5,12 @@ require 'open-uri'
 require 'securerandom'
 require 'ipaddr'
 
-GUID = 'f11f029f-a2d4-4b75-92cd-2df8a9549b65' # Any GUID is okay.
+ # Any GUID is okay, but splitting them to separate use cases.
+PULL_GUID = 'f11f029f-a2d4-4b75-92cd-2df8a9549b65'
+DESC_GUID = 'b794baa0-662f-4592-b4f0-46ab3284b612'
 PROCESS = '/Applications/Microsoft Teams.app/Contents/MacOS/Teams'
 
-def make_endpoint(guid = SecureRandom.uuid)
+def endpoint(guid = SecureRandom.uuid)
   'https://endpoints.office.com/endpoints/worldwide' \
   "?clientrequestid=#{guid}&ServiceAreas=Skype"
 end
@@ -43,7 +45,7 @@ def get_hosts(urls, domains = get_domains(urls))
   urls.reject { |v| v.start_with?('*') } - domains
 end
 
-msrules = JSON.parse(URI.open(make_endpoint(GUID)).read)
+msrules = JSON.parse(URI.open(endpoint(PULL_GUID)).read)
 
 def extract_lsrules(msrule)
   lsrule = {
@@ -91,6 +93,6 @@ def extract_lsrules(msrule)
 end
 
 puts JSON.pretty_generate \
-  description: "Rules based on Microsoft Endpoints API at #{make_endpoint}",
+  description: "Rules based on Microsoft Endpoints at #{endpoint(DESC_GUID)}",
   name:        'Microsoft Teams',
   rules:       msrules.flat_map { |msrule| extract_lsrules(msrule) }
