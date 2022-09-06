@@ -49,7 +49,7 @@ msrules = JSON.parse(URI.open(endpoint(PULL_GUID)).read)
 
 def extract_lsrules(msrule)
   lsrule = {
-    'action'  => msrule['required'] ? 'allow' : 'ask',
+    'action'  => 'allow',
     'notes'   => msrule['notes'],
     'process' => PROCESS
   }.compact
