@@ -19,7 +19,7 @@ jobs:
         run: "./gen-skype > build/skype.lsrules"
       - name: Check the time
         id: time
-        run: echo "::set-output name=now::$(date --rfc-3339=seconds)"
+        run: echo "now=$(date --rfc-3339=seconds)" >> $GITHUB_OUTPUT
       - name: Publish msteams.lsrules
         uses: popsiclestick/gist-sync-action@v1.2.0
         with:
