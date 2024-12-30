@@ -5,6 +5,7 @@ on:
     branches: [main]
   schedule:
     - cron: '0 0 * * *' # daily at midnight
+  workflow_dispatch:
 
 jobs:
   deploy-msteams:
