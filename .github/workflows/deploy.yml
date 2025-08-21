@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-msteams:
+  deploy-rules:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,10 +16,6 @@ jobs:
         run: mkdir -p build
       - name: Generate msteams.lsrules
         run: "./gen-msteams > build/msteams.lsrules"
-      - name: Generate msteams-new.lsrules
-        run: "./gen-msteams-new > build/msteams-new.lsrules"
-      - name: Generate skype.lsrules
-        run: "./gen-skype > build/skype.lsrules"
       - name: Check the time
         id: time
         run: echo "now=$(date --rfc-3339=seconds)" >> $GITHUB_OUTPUT
@@ -27,23 +23,7 @@ jobs:
         uses: popsiclestick/gist-sync-action@v1.2.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
-          gist_url: https://gist.github.com/maxim/2ae0a2b68bb6ae053ee0a72e57e4e34d
-          gist_title: msteams.lsrules
-          gist_description: Little Snitch rules for Microsoft Teams classic, updated at ${{ steps.time.outputs.now }}.
-          github_file: ./build/msteams.lsrules
-      - name: Publish msteams-new.lsrules
-        uses: popsiclestick/gist-sync-action@v1.2.0
-        with:
-          auth: ${{ secrets.GIST_TOKEN }}
           gist_url: https://gist.github.com/maxim/885e395b7d6cd2991790c0f3167326ee
-          gist_title: msteams-new.lsrules
+          gist_title: msteams.lsrules
           gist_description: Little Snitch rules for Microsoft Teams, updated at ${{ steps.time.outputs.now }}.
-          github_file: ./build/msteams-new.lsrules
-      - name: Publish skype.lsrules
-        uses: popsiclestick/gist-sync-action@v1.2.0
-        with:
-          auth: ${{ secrets.GIST_TOKEN }}
-          gist_url: https://gist.github.com/maxim/48753f090f99f21e6091a62e0b56311e
-          gist_title: skype.lsrules
-          gist_description: Little Snitch rules for Skype, updated at ${{ steps.time.outputs.now }}.
-          github_file: ./build/skype.lsrules
+          github_file: ./build/msteams.lsrules
